@@ -66,7 +66,6 @@ int helpCmd(int argc,char **argv){
     Serial.print("\t");
     Serial.println(cmd_tbl[i].name);
   }
-  Serial.println("Done!");
   return rt;
 }
 
