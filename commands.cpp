@@ -1,8 +1,8 @@
 
 #include "terminal.h"
+#include "sign.h"
 #include <stdio.h>
 #include <string.h>
-#include <FastLED.h>
 #include <Arduino.h>
 
 int brt_Cmd(int argc, char** argv)
@@ -49,17 +49,55 @@ int brt_Cmd(int argc, char** argv)
         return 4;
     }
     //set brightness
-    FastLED.setBrightness( temp );
+    sign_leds.setBrightness( temp );
   }
   //printf("Brightness : %u\n", FastLED.getBrightness());
   Serial.print("Brightness : ");
-  Serial.print(FastLED.getBrightness());
+  Serial.print(sign_leds.getBrightness());
+  Serial.print("\r\n");
+  return 0;
+}
+
+struct {
+  enum pattern val;
+  const char *name;
+} pat_tbl[] = {
+  {PAT_OFF, "off"},
+  {PAT_FLOW, "flow"},
+  {PAT_FADE, "fade"},
+};
+
+int pat_Cmd(int argc, char** argv)
+{
+  int i;
+  enum pattern p;
+  if(argc>0)
+  {
+    p = PAT_INVALID;
+    for(i=0; i< sizeof(pat_tbl)/sizeof(pat_tbl[0]); i++)
+    {
+      if(!strcmp(argv[1], pat_tbl[i].name))
+      {
+        p = pat_tbl[i].val;
+        break;
+      }
+    }
+    if(p == PAT_INVALID)
+    {
+      Serial.print("Invalid pattern");
+    }
+    sign_pattern = p;
+  }
+  Serial.print("Pattern : ");
+  Serial.print(sign_pattern);
   Serial.print("\r\n");
   return 0;
 }
 
 
 const CMD_SPEC cmd_tbl[]={
-                            {"help","get help on commands",helpCmd},
-                            {"brt","adjust brightness",brt_Cmd},
+                            {"help", "get help on commands", helpCmd},
+                            {"brt", "adjust brightness", brt_Cmd},
+                            {"pat", "change LED pattern", pat_Cmd},
+                            {NULL, NULL, NULL},
 };
