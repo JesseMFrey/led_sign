@@ -1,50 +1,58 @@
 //#define FASTLED_FORCE_SOFTWARE_PINS
 
-#include "FastLED.h"
 #include "terminal.h"
+#include "sign.h"
 
 #define LED_PIN A0
 
 #define NUM_LEDS (14)
 
-CRGB leds[NUM_LEDS];
-
-enum pattern {PAT_FLOW=0, PAT_FADE};
+Adafruit_NeoPixel sign_leds(NUM_LEDS , LED_PIN, NEO_GRB + NEO_KHZ800);
 
 static TERM_DAT term;
 
 void setup() {
-  //turn all LEDs off
-  fill_solid(leds, NUM_LEDS, CRGB(0, 0, 0));
   
-  FastLED.addLeds<WS2812, LED_PIN,GRB>(leds, NUM_LEDS);
-  FastLED.setBrightness( 255 ); // out of 255
+  sign_leds.begin();
+  sign_leds.clear();
 
   //Setup serial
   Serial.begin(9600);
   //initialize terminal things
   terminal_init(&term);
 }
-
-int pos = 0;
-enum pattern pat=PAT_FLOW;
+uint16_t pos = 0;
+enum pattern sign_pattern=PAT_FLOW;
+int is_off = 1;
 
 void loop() {
 
-  switch(pat)
+  switch(sign_pattern)
   {
     case PAT_FLOW:
-      pos += 1;
-      fill_rainbow(leds, NUM_LEDS, pos, max(1, 255 / NUM_LEDS) );
+      pos += 250;
+      sign_leds.rainbow(pos);
       delay(20);
       break;
     case PAT_FADE:
-      pos += 1;
-      fill_solid(leds, NUM_LEDS, CHSV(pos, 255, 255));
-      delay(50);
+      pos += 50;
+      sign_leds.fill(sign_leds.ColorHSV(pos, 255, 255));
+      delay(20);
       break;
+    case PAT_OFF:
+      if( !is_off)
+      {
+        is_off = 1;
+        sign_leds.fill();
+        sign_leds.show();
+      }
   }
-  FastLED.show();
+
+  if( sign_pattern != PAT_OFF )
+  {
+    is_off=0;
+    sign_leds.show();
+  }
 
   while(Serial.available())
   {
