@@ -10,6 +10,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <ctype.h>
+#include <Arduino.h>
 
 //used to break up a string into arguments for parsing
 //*argv[] is a vector for the arguments and contains pointers to each argument
@@ -45,20 +46,27 @@ int helpCmd(int argc,char **argv){
       //look for a match
       if(!strcmp(cmd_tbl[i].name,argv[1])){
         //match found, print help and exit
-        printf("%s %s\r\n",cmd_tbl[i].name,cmd_tbl[i].helpStr);
+        //printf("%s %s\r\n",cmd_tbl[i].name,cmd_tbl[i].helpStr);
+        Serial.print(cmd_tbl[i].name);
+        Serial.print(" ");
+        Serial.println(cmd_tbl[i].helpStr);
         return 0;
       }
     }
     //no match found print error
-    printf("Error : command \'%s\' not found\r\n",argv[1]);
+    Serial.print("Error : command \'");
+    Serial.print(argv[1]);
+    Serial.println("\' not found");
     //fall through and print a list of commands and return -1 for error
     rt=-1;
   }
   //print a list of commands
-  printf("Possible Commands:\r\n");
+  Serial.print("Possible Commands:\r\n");
   for(i=0;cmd_tbl[i].name!=NULL;i++){
-    printf("\t%s\r\n",cmd_tbl[i].name);
+    Serial.print("\t");
+    Serial.println(cmd_tbl[i].name);
   }
+  Serial.println("Done!");
   return rt;
 }
 
@@ -82,7 +90,9 @@ int doCmd(const char *cs){
     }
   }
   //unknown command, print help message
-  printf("unknown command \'%s\'\r\n",argv[0]);
+  Serial.print("unknown command \'");
+  Serial.print(argv[0]);
+  Serial.print("\'\r\n");
   helpCmd(0, NULL);
   //unknown command, return error
   return 1;
@@ -97,7 +107,7 @@ void terminal_proc_char(char c,TERM_DAT *data){
             //return key run command
             if(data->cIdx==0){
                 //if nothing entered, ring bell
-                putchar(0x07);
+                Serial.print(0x07);
                 break;
             }else{
                 //run command from buffer
@@ -105,18 +115,18 @@ void terminal_proc_char(char c,TERM_DAT *data){
                 data->cIdx=0;         //reset the command index
             }
             //send carriage return and new line
-            printf("\r\n");
+            Serial.print("\r\n");
             //run command
             doCmd(data->linebuf);
             //print prompt char
-            putchar('>');
+            Serial.print('>');
             return;
         case '\x7f':
         case '\b':
             //backspace
             if(data->cIdx==0)return;
             //backup and write over char
-            printf("\b \b");
+            Serial.print("\b \b");
             //decrement command index
             data->cIdx--;
             return;
@@ -127,7 +137,7 @@ void terminal_proc_char(char c,TERM_DAT *data){
     //check for control char
     if(!iscntrl(c) && data->cIdx<(sizeof(data->linebuf)/sizeof(data->linebuf[0]) - 1)){
       //echo character
-      putchar(c);
+      Serial.print((char)c);
       //put character in command buffer
       data->linebuf[data->cIdx++]=c;
     }
